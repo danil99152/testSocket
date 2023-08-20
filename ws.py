@@ -22,7 +22,7 @@ async def remove_disconnect_file() -> None:
 
 # Функция для отправки ответа с ошибкой
 async def send_error(websocket, status: int, detail: str) -> None:
-    data = {"detail": detail, "status": status}
+    data = json.dumps({"detail": detail, "status": status})
     asyncio.create_task(websocket.send(data))
 
 
@@ -36,18 +36,18 @@ async def handle_client(websocket) -> None:
             message = Message(**json.loads(data))
             if message.action == "session_update":
                 if not message.connected:
-                    await websocket.send({"detail": "OK", "status": 200})
+                    await websocket.send(json.dumps({"detail": "OK", "status": 200}))
                     await asyncio.sleep(30)
                     if not message.connected:
                         await create_disconnect_file()
                 elif message.connected:
-                    await websocket.send({"detail": "OK", "status": 200})
+                    await websocket.send(json.dumps({"detail": "OK", "status": 200}))
                     await remove_disconnect_file()
             # Неверный запрос
             elif message.action != "session_update":
                 await send_error(websocket, 400, "Bad request")
             # Успешная обработка
             else:
-                await websocket.send({"detail": "OK", "status": 200})
+                await websocket.send(json.dumps({"detail": "OK", "status": 200}))
         except:
             await send_error(websocket, 500, "Internal Server Error")
